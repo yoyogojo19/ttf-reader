@@ -114,8 +114,14 @@ struct GlyphData {
     GlyphData(std::vector<int> coordsX, std::vector<int> coordsY, std::vector<int> endEdicies) : coordsX(coordsX), coordsY(coordsY), endEdicies(endEdicies) {}
 };
 
-GlyphData readSimpleGlyph() {
+std::vector<GlyphData> allGlyphs;
+
+int readSimpleGlyph() {
     int numContours = readInt16();// get the number of contours
+    if (numContours < 0) {
+        return 0;
+    } 
+    std::cout << "simple glyph : " << numContours <<"\n";
     std::vector<int> endEdicies; 
     skipBytes(8); // skip boud size
 
@@ -140,7 +146,8 @@ GlyphData readSimpleGlyph() {
     }
     std::vector<int> coordsX = readCoords(flags, numPoints, true);
     std::vector<int> coordsY = readCoords(flags, numPoints, false);
-    return GlyphData(coordsX, coordsY, endEdicies);
+    allGlyphs.push_back(GlyphData(coordsX, coordsY, endEdicies));
+    return allGlyphs.size()-1;
 }
 
 #endif

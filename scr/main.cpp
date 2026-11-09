@@ -25,16 +25,12 @@ int main() {
 
     // go to the Glyph table
     goTo(allTables["glyf"]);
-    for (int i = 0; i < 2; i ++) {
-        readSimpleGlyph();
+    int glyphIdx[10];
+    for (int i = 0; i < 10; i ++) {
+        std::cout << "idx : " << i << "\n";
+        glyphIdx[i] = readSimpleGlyph();
     } 
-    GlyphData glyf0 = readSimpleGlyph();
-    std::cout << "Glyph0 :\n";
-    for (auto i : glyf0.endEdicies) {
-        std::cout << "End indicies : " << i << "\n";
-    } for (int i = 0; i < glyf0.coordsX.size(); i++) {
-        std::cout << "Point" << i << " : " << glyf0.coordsX[i] << "," << glyf0.coordsY[i] << "\n";
-    }
+    GlyphData glyf0 = allGlyphs[glyphIdx[9]];
 
     glfwInit();
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "TTF test", NULL, NULL);
