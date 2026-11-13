@@ -23,14 +23,30 @@ int main() {
         allTables.add(tag, Offset);
     }
 
-    // go to the Glyph table
-    goTo(allTables["glyf"]);
-    int glyphIdx[10];
-    for (int i = 0; i < 10; i ++) {
-        std::cout << "idx : " << i << "\n";
-        glyphIdx[i] = readSimpleGlyph();
-    } 
-    GlyphData glyf0 = allGlyphs[glyphIdx[9]];
+    // get the number of glyphs
+    goTo(allTables["maxp"] + 4);
+    int numGlyphs = readUInt16();
+    std::cout << "Number of glyphs : " << numGlyphs << "\n";
+    
+    // get the offset version
+    goTo(allTables["head"] + 50);
+    bool isTwoByte = readInt16() == 0;
+    std::cout << "isTwoByte : " << isTwoByte << "\n";
+    
+    // get all glyphs location
+    goTo(allTables["loca"]);
+    for (int i = 0; i < numGlyphs; i++) {
+        allGlyphs.addOffset(isTwoByte ? readUInt16() * 2u : readUInt32());
+    }
+
+    // get all glyphs
+    for (int i = 0; i < numGlyphs-3; i++) {
+        goTo(allTables["glyf"] + allGlyphs.offsets[i]);
+        // std::cout << "Glyph : " << i << " Position : " << allTables["glyf"] + allGlyphs.offsets[i] << "\n";
+        allGlyphs.addGlyph(readSimpleGlyph());
+    }
+
+    GlyphData glyf0 = allGlyphs[0];
 
     glfwInit();
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "TTF test", NULL, NULL);
@@ -42,13 +58,6 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
-        glPointSize(20.0f);
-        glColor3f(1.0f,1.0f,1.0f);
-        glBegin(GL_POINTS);
-        for (int i = 0; i < glyf0.coordsX.size(); i++) {
-            glVertex2f(static_cast<float>(glyf0.coordsX[i]) / 1920.0, static_cast<float>(glyf0.coordsY[i]) / 1080.0);
-        }
-        glEnd();
         glBegin(GL_LINES);
         for (int i = 0; i < glyf0.endEdicies.size(); i++) {
             switch (i) {
@@ -63,10 +72,10 @@ int main() {
                     break;
             }
             for (int j = (i-1 < 0 ? 0 : glyf0.endEdicies[i-1]+1); j <= glyf0.endEdicies[i]; j++) {
-                glVertex2f(static_cast<float>(glyf0.coordsX[j]) / 1920.0, static_cast<float>(glyf0.coordsY[j]) / 1080.0);
+                glVertex2f(static_cast<float>(glyf0.coordsX[j]) / 1920.0 - 0.5, static_cast<float>(glyf0.coordsY[j]) / 1080.0 - 0.5);
                 glVertex2f(
-                    static_cast<float>((j+1 <= glyf0.endEdicies[i]) ? glyf0.coordsX[j+1] : glyf0.coordsX[(i-1 < 0 ? 0 : glyf0.endEdicies[i-1]+1)]) / 1920.0,
-                    static_cast<float>((j+1 <= glyf0.endEdicies[i]) ? glyf0.coordsY[j+1] : glyf0.coordsY[(i-1 < 0 ? 0 : glyf0.endEdicies[i-1]+1)]) / 1080.0
+                    static_cast<float>((j+1 <= glyf0.endEdicies[i]) ? glyf0.coordsX[j+1] : glyf0.coordsX[(i-1 < 0 ? 0 : glyf0.endEdicies[i-1]+1)]) / 1920.0 - 0.5,
+                    static_cast<float>((j+1 <= glyf0.endEdicies[i]) ? glyf0.coordsY[j+1] : glyf0.coordsY[(i-1 < 0 ? 0 : glyf0.endEdicies[i-1]+1)]) / 1080.0 - 0.5
                 );
             }
         }

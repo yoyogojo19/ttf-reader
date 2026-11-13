@@ -24,14 +24,14 @@ uint8_t readByte() {
     ttfFile.seekg(cursor);
     char byte; 
     ttfFile.read(&byte, 1);
-    cursor += 1;
+    cursor++;
     return static_cast<uint8_t>(byte);
 }
 
 uint16_t readUInt16() {
-    uint8_t a = readByte();
-    uint8_t b = readByte();
-    return (static_cast<uint16_t>(a) << 8) | static_cast<uint16_t>(b);
+    uint16_t a = readByte();
+    uint16_t b = readByte();
+    return (a << 8) | b;
 }
 
 int16_t readInt16() {
@@ -40,9 +40,11 @@ int16_t readInt16() {
 }
 
 uint32_t readUInt32() {
-    uint16_t a = readUInt16();
-    uint16_t b = readUInt16();
-    return (static_cast<uint32_t>(a) << 16) | static_cast<uint32_t>(b);
+    uint32_t a = readByte();
+    uint32_t b = readByte();
+    uint32_t c = readByte();
+    uint32_t d = readByte();
+    return (a << 24) | (b << 16) | (c << 8) | d;
 }
 
 std::string readTag() {
@@ -114,14 +116,30 @@ struct GlyphData {
     GlyphData(std::vector<int> coordsX, std::vector<int> coordsY, std::vector<int> endEdicies) : coordsX(coordsX), coordsY(coordsY), endEdicies(endEdicies) {}
 };
 
-std::vector<GlyphData> allGlyphs;
+struct GlyphTable {
+    std::vector<uint32_t> offsets;
+    std::vector<GlyphData> glyphs;
 
-int readSimpleGlyph() {
+    void addOffset(uint32_t Offset) {
+        offsets.push_back(Offset);
+    }
+
+    void addGlyph(GlyphData Glyph) {
+        glyphs.push_back(Glyph);
+    }
+
+    GlyphData operator[](int idx) {
+        return glyphs[idx];
+    }
+};
+
+GlyphTable allGlyphs;
+
+GlyphData readSimpleGlyph() {
     int numContours = readInt16();// get the number of contours
     if (numContours < 0) {
-        return 0;
-    } 
-    std::cout << "simple glyph : " << numContours <<"\n";
+        return allGlyphs[0];
+    }
     std::vector<int> endEdicies; 
     skipBytes(8); // skip boud size
 
@@ -146,8 +164,7 @@ int readSimpleGlyph() {
     }
     std::vector<int> coordsX = readCoords(flags, numPoints, true);
     std::vector<int> coordsY = readCoords(flags, numPoints, false);
-    allGlyphs.push_back(GlyphData(coordsX, coordsY, endEdicies));
-    return allGlyphs.size()-1;
+    return GlyphData(coordsX, coordsY, endEdicies);
 }
 
 #endif
